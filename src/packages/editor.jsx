@@ -5,6 +5,8 @@ import './editor.less';
 import {useMenuDragger} from "../utils/useMenuDragger";
 import {useFocus} from "../utils/useFocus";
 import {useBlockDragger} from '../utils/useBlockDragger';
+import {Button} from "ant-design-vue";
+import {useCommand} from "../utils/useCommand";
 
 export default defineComponent({
   components: {
@@ -39,15 +41,27 @@ export default defineComponent({
     const {dragstart, dragend} = useMenuDragger(containerRef, data)
 
     // 2.实现获取焦点
-    let {blockMousedown, focusData, containerMousedown} = useFocus(data, (e) => {
+    let {blockMousedown, focusData, containerMousedown, lastSelectBlock} = useFocus(data, (e) => {
       // 获取焦点后进行拖拽
       mousedown(e)
     });
-    // 2.实现组件拖拽
-    let {mousedown} = useBlockDragger(focusData);
-
-
     // 3.实现拖拽多个元素的功能
+    let {mousedown, markLine} = useBlockDragger(focusData, lastSelectBlock, data);
+
+    const {commands} = useCommand(data);
+
+    const buttons = [
+      {
+        label: '撤销',
+        type: 'default',
+        handler: () => commands.undo()
+      }, {
+        label: '重做',
+        type: 'default',
+        handler: () => commands.redo()
+      }
+    ]
+
 
 
     return () => < div class="editor" >
@@ -64,6 +78,9 @@ export default defineComponent({
         })}
       </div>
       <div class="editor-top">
+        {buttons.map((btn, index) => {
+          return <Button type={btn.type} onClick={btn.handler}>{btn.label}</Button>
+        })}
       </div>
       <div class="editor-right">
       </div>
@@ -73,13 +90,15 @@ export default defineComponent({
             ref={containerRef}
             style={containerStyles.value}
             onMousedown={containerMousedown}>
-            {data.value.blocks.map(block => (
+            {data.value.blocks.map((block, index) => (
               <EditorBlock
                 class={block.focus ? 'editor-block-focus' : ''}
                 block={block}
-                onMousedown={(e) => blockMousedown(e, block)}>
+                onMousedown={(e) => blockMousedown(e, block, index)}>
               </EditorBlock>
             ))}
+            {markLine.x !== null && <div class="line-x" style={{left: markLine.x + 'px'}}></div>}
+            {markLine.y !== null && <div class="line-y" style={{top: markLine.y + 'px'}}></div>}
           </div>
         </div>
       </div>

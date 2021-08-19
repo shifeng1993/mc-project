@@ -25,6 +25,9 @@ export default defineComponent({
         block.value.top = block.value.top - offsetHeight / 2;
         block.value.alignCenter = false;
       }
+
+      props.block.width = offsetWidth; // eslint-disable-line
+      props.block.height = offsetHeight;// eslint-disable-line
     })
 
     return () => {
